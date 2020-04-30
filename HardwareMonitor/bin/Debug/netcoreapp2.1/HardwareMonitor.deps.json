@@ -1,13 +1,14 @@
 {
   "runtimeTarget": {
     "name": ".NETCoreApp,Version=v2.1",
-    "signature": "342762fcb97e47b9be1ee6e5481f77d37f7295a6"
+    "signature": "1484d38f2d963f562408374a7ed795095741ebc0"
   },
   "compilationOptions": {},
   "targets": {
     ".NETCoreApp,Version=v2.1": {
       "HardwareMonitor/1.0.0": {
         "dependencies": {
+          "AWSSDK": "2.3.55.2",
           "System.Diagnostics.PerformanceCounter": "4.7.0",
           "System.Management": "4.7.0",
           "OpenHardwareMonitorLib": "0.9.2.0",
@@ -15,6 +16,14 @@
         },
         "runtime": {
           "HardwareMonitor.dll": {}
+        }
+      },
+      "AWSSDK/2.3.55.2": {
+        "runtime": {
+          "lib/net45/AWSSDK.dll": {
+            "assemblyVersion": "2.3.55.2",
+            "fileVersion": "2.3.55.2"
+          }
         }
       },
       "Microsoft.NETCore.Platforms/3.1.0": {},
@@ -241,6 +250,13 @@
       "type": "project",
       "serviceable": false,
       "sha512": ""
+    },
+    "AWSSDK/2.3.55.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-zy/6psTOx9c8LaZqL1tUtiGKMpd35b16TNRctz/N6Qc6hqFeOjyZ5WVhn89szJkkZtotcMFyfq58Y2RfyRxxUg==",
+      "path": "awssdk/2.3.55.2",
+      "hashPath": "awssdk.2.3.55.2.nupkg.sha512"
     },
     "Microsoft.NETCore.Platforms/3.1.0": {
       "type": "package",

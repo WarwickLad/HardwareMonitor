@@ -1,11 +1,37 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using Amazon;
+using Amazon.S3;
+using Amazon.S3.Transfer;
+using System.Threading.Tasks;
 
 namespace HardwareMonitor
 {
     public class HardwareMonitor
     {
+        private static readonly RegionEndpoint bucketRegion = RegionEndpoint.EUWest1;
+        private static IAmazonS3 s3Client;
+
+        private static async Task UploadFileAsync(string filePath, string bucketName)
+        {
+            try
+            {
+                var fileTransferUtility = new TransferUtility(s3Client);
+                // Option 1. Upload a file. The file name is used as the object key name.
+                await fileTransferUtility.UploadAsync(filePath, bucketName);
+                Console.WriteLine("Upload to S3 completed");
+            }
+            catch (AmazonS3Exception e)
+            {
+                Console.WriteLine("Error encountered on server. Message:'{0}' when writing an object", e.Message);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Unknown encountered on server. Message:'{0}' when writing an object", e.Message);
+            }
+        }
+
         private static void ReadValuesOfPerformanceCounters()
         {
             //Initialise performance counter objects
@@ -20,31 +46,35 @@ namespace HardwareMonitor
             DateTime dateTime = DateTime.UtcNow;
             long unixTime = ((DateTimeOffset)dateTime).ToUnixTimeSeconds();
 
+            //Initiliase string array to write to console and text file
             String[] textOutput = new string[9];
             string textLine = "";
 
+            //Initialise loop counter to track file write/API push cycles
+            int loopCounter = 0;
+            int loopTotal = 6;
+
+            //Initialise text file and clear previous entries
+            File.WriteAllText(@"C:\Users\Zachary\Documents\Visual Studio 2017\Projects\HardwareMonitor\HardwareMonitor\WriteLines.txt", String.Empty);
+
+            string bucketNameS3 = "hardware-monitor-staging";
+
             while (true)
             {
+                //Clear text file after loop counter reachers cycle length
+                if(loopCounter == loopTotal)
+                {
+                    loopCounter = 0;
+                    UploadFileAsync(@"C:\Users\Zachary\Documents\Visual Studio 2017\Projects\HardwareMonitor\HardwareMonitor\WriteLines.txt", bucketNameS3).Wait();
+                    File.WriteAllText(@"C:\Users\Zachary\Documents\Visual Studio 2017\Projects\HardwareMonitor\HardwareMonitor\WriteLines.txt", String.Empty);
+                }
+                loopCounter++;
+
                 //Timestamps updated
                 dateTime = DateTime.UtcNow;
                 unixTime = ((DateTimeOffset)dateTime).ToUnixTimeSeconds();
 
-                /*
-
-                //Performance counter values are updated
-                Console.WriteLine("Unix timestamp: {0}", unixTime.ToString());
-                Console.Write("Date: {0}", dateTime);
-                Console.WriteLine("");
-                Console.WriteLine("CPU value: {0}", processorTimeCounter.NextValue());
-                Console.Write("Memory value: {0}", memoryUsage.NextValue());
-                Console.WriteLine(" Memory usage: {0}", memoryPercentage.NextValue());
-                Console.Write("C1 time: {0}", processorC1.NextValue());
-                Console.Write(" C2 time: {0}", processorC2.NextValue());
-                Console.WriteLine(" C3 time: {0}", processorC3.NextValue());
-                Console.WriteLine("------------------------------");
-
-                */
-
+                //Writing to console
                 textLine = unixTime.ToString();
                 textOutput[0] = textLine;
                 Console.WriteLine(textLine);
@@ -81,20 +111,7 @@ namespace HardwareMonitor
 
                 Console.WriteLine("-----------------------------");
 
-                /*
-
-                textOutput[0] = dateTime.ToString();
-                textOutput[1] = unixTime.ToString();
-                textOutput[2] = processorTimeCounter.NextValue().ToString();
-                textOutput[3] = memoryUsage.NextValue().ToString();
-                textOutput[4] = memoryPercentage.NextValue().ToString();
-                textOutput[5] = processorC1.NextValue().ToString();
-                textOutput[6] = processorC2.NextValue().ToString();
-                textOutput[7] = processorC3.NextValue().ToString();
-                textOutput[8] = "";
-
-                */
-
+                //Writing to file
                 using (System.IO.StreamWriter file = new System.IO.StreamWriter(@"C:\Users\Zachary\Documents\Visual Studio 2017\Projects\HardwareMonitor\HardwareMonitor\WriteLines.txt", true))
                 {
                     foreach (string line in textOutput)
@@ -104,12 +121,15 @@ namespace HardwareMonitor
                 }
 
                 //Thread sleeps for 10s
-                System.Threading.Thread.Sleep(20000);
+                System.Threading.Thread.Sleep(10000);
             }
         }
 
         public static void Main()
         {
+            s3Client = new AmazonS3Client(bucketRegion);
+
+            //Main code executed
             ReadValuesOfPerformanceCounters();
         }
     }
